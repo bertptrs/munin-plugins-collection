@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# DESCRIPTION
+#
+# This plugin monitors the state of tuples in the milter-greylist.
+#
+# WARNINGS
+#
+# This plugin issues no warnings
+#
+# ENVIRONMENT
+#
+# The location of the greylist DB file is configurable in the GREYLIST_FILE
+# env variable. Also, this plugin should be able to read the greylist file,
+# so it should probably run as postfix or with the "mail" group.
+#
+# MAGIC MARKERS
+#
+# #%# family=auto
+# #%# capabilities=autoconf
+
+GREYLIST_FILE=${GREYLIST_FILE:-/var/lib/milter-greylist/greylist.db}
+
+case $1 in
+	autoconf)
+		test -r "$GREYLIST_FILE" && echo yes || echo "no ($GREYLIST_FILE not readable)"
+		;;
+
+	config)
+		cat <<EOD
+graph_title Size of greylist
+graph_vlabel Number in greylist
+graph_category postfix
+graph_info Number of tuples in the milter-greylist
+whitelisted.label Whitelisted tuples
+whitelisted.draw AREA
+greylisted.label Greylisted tuples
+greylisted.draw STACK
+EOD
+;;
+
+	*)
+		tmpfile=`mktemp`
+		chmod 600 $tmpfile
+
+		# Filter out only the relevant rows
+		grep -v '^#' "$GREYLIST_FILE" | grep -v '^$' > $tmpfile
+
+		echo "whitelisted.value $(grep -c AUTO $tmpfile)"
+		echo "greylisted.value $(grep -vc AUTO $tmpfile)"
+
+		rm $tmpfile
+		;;
+esac
+
