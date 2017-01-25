@@ -14,7 +14,7 @@
 #
 # MAGIC MARKERS
 #
-# #%# family=auto
+# #%# family=contrib
 # #%# capabilities=autoconf
 
 case $1 in

@@ -16,7 +16,7 @@
 #
 # MAGIC MARKERS
 #
-# #%# family=auto
+# #%# family=contrib
 # #%# capabilities=autoconf
 
 GREYLIST_FILE=${GREYLIST_FILE:-/var/lib/milter-greylist/greylist.db}

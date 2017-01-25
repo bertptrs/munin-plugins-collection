@@ -21,7 +21,7 @@
 #
 # MAGIC MARKERS
 #
-# #%# family=auto
+# #%# family=contrib
 # #%# capabilities=autoconf
 
 # Compute all services, removing duplicates

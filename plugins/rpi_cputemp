@@ -17,7 +17,7 @@
 #
 # MAGIC MARKERS
 #
-# #%# family=auto
+# #%# family=contrib
 # #%# capabilities=autoconf
 
 COMMAND="/opt/vc/bin/vcgencmd"
