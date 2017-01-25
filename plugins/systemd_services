@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# DESCRIPTION
+#
+# This plugin monitors the running state of a given set of services.
+#
+# WARNINGS
+#
+# This plugin will issue a warning whenever a "warning" service is failed,
+# and a critical error if a "critical"
+#
+# ENVIRONMENT
+#
+# env.services
+#   A space-separated list of systemd services that will generate a warning
+#   when failed.
+#
+# env.critical_services
+#   A space-separated list of systemd services that will generate a critical
+#   error when failed.
+#
+# MAGIC MARKERS
+#
+# #%# family=auto
+# #%# capabilities=autoconf
+
+# Compute all services, removing duplicates
+critical_services=" $critical_services "
+all_services=$(echo $services $critical_services | tr ' ' '\n' | sort -u)
+
+clean_name()
+{
+	echo "$@" | sed -e 's/^[^A-Za-z_]/_/' -e 's/[^A-Za-z0-9_]/_/g' -e 's/^root$/__root/'
+}
+
+case $1 in
+	config)
+		cat <<-EOF
+graph_title Systemctl running status
+graph no
+graph_vlabel running
+graph_category system
+graph_info The running state for selected services.
+EOF
+
+		for service in $all_services; do
+			cleaned_name=$(clean_name $service)
+
+			if [[ $critical_services == *" $service "* ]]; then
+				echo ${cleaned_name}.critical 1:1
+			else
+				echo ${cleaned_name}.warning 1:1
+			fi
+
+			echo ${cleaned_name}.label $service
+			echo ${cleaned_name}.info $(systemctl show $service | grep -F "Description=" | cut -d "=" -f 2-)
+		done
+		;;
+
+	autoconf)
+		if [[ -n $all_services ]]; then
+			echo yes
+		else
+			echo "no (no services configured)"
+		fi
+		;;
+
+	**)
+		for service in $all_services; do
+			echo $(clean_name $service).value $(systemctl is-active $service >/dev/null && echo 1 || echo 0)
+		done
+		;;
+esac
