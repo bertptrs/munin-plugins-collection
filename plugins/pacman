@@ -4,6 +4,10 @@
 #
 # This plugin monitors the number of pending updates in pacman.
 #
+# WARNINGS
+#
+# This plugin will issue a warning state whenever any package can be updated.
+#
 # ENVIRONMENT
 #
 # This plugin takes no environment values and can be run as any user.

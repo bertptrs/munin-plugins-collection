@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# DESCRIPTION
+#
+# This plugin measures the current CPU temperature on a Raspberry Pi. For
+# this, instead of reading /sys/class/thermal/, it uses the firmware program
+# vcgencmd instead.
+#
+# WARNINGS
+#
+# This plugin will issue warnings and critical notices whenever the current
+# temperature nears the maximum safe temperature of 80 degrees Celsius.
+#
+# ENVIRONMENT
+#
+# This plugin takes no environment values and can be run as any user.
+#
+# MAGIC MARKERS
+#
+# #%# family=auto
+# #%# capabilities=autoconf
+
+COMMAND="/opt/vc/bin/vcgencmd"
+
+case $1 in
+	config)
+		cat <<'EOM'
+graph_title CPU temperature
+graph_category sensors
+graph_args --base 1000
+graph_vlabel Degrees Celcius
+cpu.label cpu
+cpu.max 80
+cpu.warning 65
+cpu.critical 73
+EOM
+		;;
+
+	autoconf)
+		test -x "$COMMAND" && echo yes || echo no
+		;;
+
+	*)
+		echo "cpu.value $($COMMAND measure_temp | grep -oE '[0-9]+\.[0-9]+')"
+		;;
+esac
