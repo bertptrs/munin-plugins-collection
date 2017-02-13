@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# DESCRIPTION
+#
+# This plugin monitors the currently allocated blocks in a LVM volumegroup.
+#
+# WARNINGS
+#
+# This plugin issues no warnings
+#
+# ENVIRONMENT
+#
+# This plugin needs to be able to run LVM commands, and thus probably needs
+# to run as root.
+#
+# Optinally, warning and critical levels can be set using the WARN_FREE and
+# CRIT_FREE enviroment variables. These levels must be in bytes.
+#
+# MAGIC MARKERS
+#
+# #%# family=contrib
+# #%# capabilities=autoconf suggest
+
+VGNAME=${0##*lvm_vg_}
+
+case $1 in
+	autoconf)
+		[[ `vgdisplay | wc -l` -gt 0 ]] && echo yes || echo "no (no volume groups detected)"
+		;;
+
+	suggest)
+		vgdisplay -c | cut -d : -f 1 | xargs -n 1 echo
+		;;
+
+	config)
+		cat <<-EOF
+		graph_title VG usage for $VGNAME
+		graph_args --base 1024 -l 0
+		graph_vlabel Capacity
+		graph_category disk
+		graph_total Total capacity
+		allocated.label Allocated capacity
+		allocated.draw AREASTACK
+		allocated.info Capacity currently allocated to logical volumes
+		free.label Available capacity
+		free.draw AREASTACK
+		free.info Capacity still available for allocation
+		EOF
+
+		if [[ -n "$WARN_FREE" ]]; then
+			echo "free.warning $WARN_FREE"
+		fi
+		if [[ -n "$CRIT_FREE" ]]; then
+			echo "free.critical $CRIT_FREE"
+		fi
+		;;
+
+	*)
+		data=`vgdisplay -c $VGNAME`
+		extentsize=$((1024 * `echo $data | cut -f 13 -d :`))
+		echo allocated.value $(($extentsize * `echo $data | cut -f 15 -d :`))
+		echo free.value $(($extentsize * `echo $data | cut -f 16 -d :`))
+esac
+
